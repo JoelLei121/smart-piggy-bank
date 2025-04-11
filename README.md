@@ -1,5 +1,27 @@
-## Next.js App Router Course - Starter
+## Smart Piggy Bank
 
-This is the starter template for the Next.js App Router Course. It contains the starting code for the dashboard application.
+dApp for publishing money-saving contracts.
 
-For more information, see the [course curriculum](https://nextjs.org/learn) on the Next.js Website.
+Frontend is modified from Next.js [App Router tutorial](https://nextjs.org/learn/dashboard-app).
+
+### Installation
+
+use `pnpm` for package management.
+
+```cmd
+npm install -g pnpm
+```
+
+install dependencies:
+
+```cmd
+pnpm i
+```
+
+run dev:
+
+```cmd
+pnpm dev
+```
+
+This app requires MetaMask or other wallet provider.
