@@ -5,7 +5,8 @@ import { useWallet } from '@/app/lib/context';
 import { Suspense, useEffect, useState } from 'react';
 import { InvoicesTableSkeleton } from '../skeletons';
 import { getFilteredContractsApi } from '@/app/lib/data';
-import { Contract } from '@/app/lib/definitions';
+import { updateContractsFromChain } from '@/app/lib/ether';
+import { ContractData } from '@/app/lib/definitions';
 
 export default function TableWrapper({
   query,
@@ -15,19 +16,24 @@ export default function TableWrapper({
   currentPage: number;
 }) {
   const { walletAddress } = useWallet();
-  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [contracts, setContracts] = useState<ContractData[]>([]);
 
+  const reloadContracts = async () => {
+    await updateContractsFromChain();
+    await loadData();
+  }
+
+  const loadData = async () => {
+    const result = await getFilteredContractsApi(walletAddress||"", query, currentPage);
+    setContracts(result);
+  };
   useEffect(() => {
-    const loadData = async () => {
-      const result = await getFilteredContractsApi(walletAddress||"", query, currentPage);
-      setContracts(result);
-    };
     loadData();
   }, [walletAddress, query, currentPage]);
 
   return (
     <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
-      <Table contracts={contracts}/>
+      <Table contracts={contracts} reload={reloadContracts}/>
     </Suspense>
   );
 }

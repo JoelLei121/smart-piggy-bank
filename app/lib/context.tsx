@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { BrowserProvider } from 'ethers';
+import { BrowserProvider, JsonRpcSigner } from 'ethers';
 
 type WalletContextType = {
   walletAddress: string | null;
@@ -11,6 +11,8 @@ type WalletContextType = {
   error: string | null;
   provider: BrowserProvider | null;
   setProvider: (provider: BrowserProvider | null) => void;
+  signer: JsonRpcSigner | null;
+  setSigner: (signer: JsonRpcSigner | null) => void;
 }
 
 const WalletContext = createContext<WalletContextType|undefined>(undefined);
@@ -24,6 +26,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
+  const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
 
   // // Check if wallet is connected on component mount
   // useEffect(() => {
@@ -57,14 +60,11 @@ export function WalletProvider({ children }: WalletProviderProps) {
   // }, []);
 
   const value = {
-    walletAddress,
-    setWalletAddress,
-    isConnecting,
-    setIsConnecting,
-    error,
-    setError,
-    provider,
-    setProvider
+    walletAddress, setWalletAddress,
+    isConnecting, setIsConnecting,
+    error, setError,
+    provider, setProvider,
+    signer, setSigner
   };
 
   return (

@@ -1,34 +1,39 @@
 'use server';
 
 import DatabaseService from "./database";
-import { Contract, NewContract } from "./definitions";
+import { ContractData, NewContract } from "./definitions";
 
 const dbService = new DatabaseService();
 
 export async function insertContractApi(address: string, contract: NewContract) {
-    return dbService.insertContract(address, contract);
+  return dbService.insertContract(address, contract);
 }
 
-export async function depositApi(address: string, depositAmount: bigint) {
-    return dbService.deposit(address, depositAmount);
+export async function depositApi(address: string, totalAmount: bigint) {
+  return dbService.deposit(address, totalAmount);
+}
+
+export async function deleteContractApi(address: string) {
+  return dbService.deleteContract(address);
 }
 
 export async function getContractPagesApi(owner: string, query: string) {
-    return dbService.getContractPages(owner, query);
+  return dbService.getContractPages(owner, query);
 }
 
 export async function getContractByAddressApi(owner: string) {
-    return dbService.getContractByAddress(owner);
+  return dbService.getContractByAddress(owner);
 }
 
 export async function getFilteredContractsApi(
-    owner: string, 
-    query: string, 
-    currentPage: number
+  owner: string, 
+  query: string, 
+  currentPage: number
 ) {
-    return dbService.getFilteredContracts(owner, query, currentPage);
+  return dbService.getFilteredContracts(owner, query, currentPage);
 }
 
 export async function getAllContractsApi() {
-    return dbService.getAllContracts();
+  return dbService.getAllContracts();
 }
+

@@ -1,6 +1,10 @@
-import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { 
+  PencilIcon, 
+  PlusIcon, 
+  BanknotesIcon, 
+  ArrowPathIcon 
+} from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { deleteInvoice } from '@/app/lib/actions';
 
 export function CreateContract() {
   return (
@@ -14,11 +18,15 @@ export function CreateContract() {
   );
 }
 
-export function UpdateContract({ address }: { address: string }) {
+export function UpdateContract({ 
+  address, 
+}: { 
+  address: string,
+}) {
   return (
     <Link
       href={`/dashboard/contracts/${address}/deposit`}
-      className="flex rounded-md border p-2 hover:bg-gray-100"
+      className={`flex rounded-md border p-2 hover:bg-gray-100`}
     >
       Deposit
       <PencilIcon className="w-5 ml-2" />
@@ -27,14 +35,25 @@ export function UpdateContract({ address }: { address: string }) {
 }
 
 
-// export function DeleteInvoice({ id }: { id: string }) {
-//   const deleteInvoiceWithId = deleteInvoice.bind(null, id);
-//   return (
-//     <form action={deleteInvoiceWithId}>
-//       <button type="submit" className="rounded-md border p-2 hover:bg-gray-100">
-//         <span className="sr-only">Delete</span>
-//         <TrashIcon className="w-5" />
-//       </button>
-//     </form>
-//   );
-// }
+export function WithdrawButton({ address }: { address: string }) {
+  return (
+    <Link
+      href={`/dashboard/contracts/${address}/withdraw`}
+      className={`flex rounded-md bg-yellow-500 text-white p-2 hover:bg-yellow-300`}
+    >
+      Withdraw
+      <BanknotesIcon className="w-5 ml-2" />
+    </Link>
+  );
+}
+
+export function ReloadButton({ reload }: { reload: () => void}) {
+  return (
+    <div className='flex justify-center font-medium px-3 py-5'
+      onClick={() => reload()}
+    >
+      Reload
+      <ArrowPathIcon className="w-5 ml-2" />
+    </div>
+  );
+}

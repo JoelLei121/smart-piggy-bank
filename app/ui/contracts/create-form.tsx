@@ -12,15 +12,47 @@ import { Button } from '@/app/ui/button';
 import { createContract, CreateState } from '@/app/lib/actions';
 import { useWallet } from '@/app/lib/context';
 import CheckBalanceButton from './check-balance-button';
+import { deployTimeContract } from '@/app/lib/ether';
+import { NewContract } from '@/app/lib/definitions';
+import { parseUnits } from 'ethers';
 
 export default function Form() {
-  const { walletAddress } = useWallet();
+  const { walletAddress, signer } = useWallet();
   const initialState: CreateState = { message: null, errors: {} };
   const [state, formAction] = useActionState(createContract, initialState);
   const [contractType, setType] = useState('time');
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const parseData = {
+      owner: formData.get('owner')?.toString(),
+      type: formData.get('type')?.toString(),
+      currentAmount: parseUnits(formData.get('currentAmount').toString(), 'ether'),
+      timestamp: formData.get('timestamp'),
+      targetAmount: parseUnits(formData.get('currentAmount').toString(), 'ether')
+    };
+    const newContract: NewContract = parseData;
+    const msec = new Date(newContract.timestamp).getTime()
+    newContract.timestamp = (msec / 1000).toString();
+    console.log(newContract);
+    let address: string = "";
+    try {
+      if(parseData.type === 'time') {
+        address = await deployTimeContract(signer, newContract);
+      } else {
+
+      }
+      formData.append('address', address);
+      formAction(formData);
+      console.log('after formAction')
+    } catch(error) {
+      return;
+    }
+  }
+
   return (
-    <form action={formAction}>
+    <form onSubmit={handleSubmit}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* User Wallet */}
         <div className="mb-4">
@@ -114,7 +146,7 @@ export default function Form() {
                 <input
                   id="timestamp"
                   name="timestamp"
-                  type="date"
+                  type="datetime-local"
                   required
                   className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
                 />
@@ -147,7 +179,7 @@ export default function Form() {
                   id="targetAmount"
                   name="targetAmount"
                   type="number"
-                  step="0.01"
+                  step="0.0001"
                   placeholder="Enter ETH amount"
                   className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
                 />
@@ -178,7 +210,7 @@ export default function Form() {
                 id="currentAmount"
                 name="currentAmount"
                 type="number"
-                step="0.01"
+                step="0.0001"
                 defaultValue={0}
                 min={0}
                 className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"

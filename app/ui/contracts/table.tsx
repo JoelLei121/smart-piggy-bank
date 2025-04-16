@@ -1,16 +1,18 @@
 import Image from 'next/image';
-import { UpdateContract } from '@/app/ui/contracts/buttons';
+import { ReloadButton, UpdateContract, WithdrawButton } from '@/app/ui/contracts/buttons';
 import ContractStatus from './status';
-import { formatDateToLocal, formatWeiToEther } from '@/app/lib/utils';
-
-import { formatEther, parseUnits } from "ethers";
-import { Contract } from '@/app/lib/definitions';
+import { formatDateToLocal, formatTimestampToDate, formatWeiToEther } from '@/app/lib/utils';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ContractData } from '@/app/lib/definitions';
 
 export default function ContractTable({
-  contracts
+  contracts,
+  reload
 }: {
-  contracts: Contract[]
+  contracts: ContractData[],
+  reload: () => void
 }) {
+  const renderTime = Date.now();
   return (
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
@@ -23,7 +25,7 @@ export default function ContractTable({
                   Address
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
-                  Timestamp
+                  Unlock Time
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Amount
@@ -31,28 +33,42 @@ export default function ContractTable({
                 <th scope="col" className="px-3 py-5 font-medium">
                   Status
                 </th>
-                <th scope="col" className="relative py-3 pl-6 pr-3" style={{"width": '10%'}}>
-                  <span className="sr-only">Edit</span>
+                <th scope="col" className="font-medium px-3 py-5" >
+                  <ReloadButton reload={reload}/>
                 </th>
               </tr>
             </thead>
 
             <tbody className="bg-white">
-              {contracts?.map((contract: Contract) => {
+              {contracts?.map((contract: ContractData) => {
+                const time = formatTimestampToDate((contract.timestamp));
                 const currentAmountInEther = formatWeiToEther(contract.currentAmount);
+                console.log(currentAmountInEther);
+                let status: 'on-chain' | 'achieved' = 'on-chain';
+                if(contract.type === 'time') {
+                  if(parseInt(contract.timestamp)*1000 < renderTime) {
+                    status = 'achieved';
+                  }
+                } else {
+                  if(contract.currentAmount >= contract.targetAmount) {
+                    status = 'achieved';
+                  }
+                }
                 return (
                 <tr
                   key={contract.address}
                   className="w-full border-b py-3 text-sm last-of-type:border-none [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
                 >
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
-                    <p>{contract.address}</p>
+                    <p>
+                      {
+                        `${contract.address.slice(0, 8)}...${contract.address.slice(-3)}`
+                      }
+                    </p>
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {
-                      contract.timestamp ?
-                      formatDateToLocal(contract.timestamp) :
-                      "None"
+                      contract.timestamp ? time : "None"
                     }
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
@@ -61,14 +77,22 @@ export default function ContractTable({
                       `${currentAmountInEther.slice(0, 3)}...${currentAmountInEther.slice(-3)}` :
                       currentAmountInEther
                     }
-                    {}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    <ContractStatus status={contract.status} />
+                    <ContractStatus status={status} />
                   </td>
-                  <td className="whitespace-nowrap py-3 pl-3 pr-3">
-                    <div className="flex justify-end gap-3">
+                  <td className="whitespace-nowrap py-3 pl-3 pr-3" >
+                    <div 
+                      className={`flex justify-end gap-3 
+                        ${status != 'on-chain' ? "hidden" : ""}`}
+                    >
                       <UpdateContract address={contract.address} />
+                    </div>
+                    <div 
+                      className={`flex justify-end gap-3 
+                        ${status != 'achieved' ? "hidden" : ""}`}
+                    >
+                      <WithdrawButton address={contract.address} />
                     </div>
                   </td>
                 </tr>

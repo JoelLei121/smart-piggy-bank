@@ -9,7 +9,7 @@ export default function ContractStatus({ status }: { status: string }) {
         {
           'bg-gray-100 text-gray-500': status === 'off-chain',
           'bg-green-500 text-white': status === 'on-chain',
-          'bg-yellow-400': status === 'expired',
+          'bg-yellow-400': status === 'achieved',
         },
       )}
     >
@@ -25,9 +25,9 @@ export default function ContractStatus({ status }: { status: string }) {
           <CheckIcon className="ml-1 w-4 text-white" />
         </>
       ) : null}
-      {status === 'expired' ? (
+      {status === 'achieved' ? (
         <>
-          Expired
+          achieved
           <CheckIcon className="ml-1 w-4" />
         </>
       ) : null}

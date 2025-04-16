@@ -18,6 +18,20 @@ export const formatDateToLocal = (
   return formatter.format(date);
 };
 
+export const formatTimestampToDate = (
+  timestamp: string,
+  locale: string = 'en-US',
+) => {
+  const date = new Date(parseInt(timestamp) * 1000);
+  const options: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  };
+  const formatter = new Intl.DateTimeFormat(locale, options);
+  return formatter.format(date);
+};
+
 export const generatePagination = (currentPage: number, totalPages: number) => {
   // If the total number of pages is 7 or less,
   // display all pages without any ellipsis.

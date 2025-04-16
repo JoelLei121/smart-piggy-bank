@@ -5,11 +5,11 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { NewContract } from './definitions';
 import { parseUnits } from "ethers";
-import { insertContractApi, depositApi } from './data';
+import { insertContractApi, depositApi, deleteContractApi } from './data';
 
 
-// TODO: timestamp > current
 const CreateFormSchema = z.object({
+  address: z.string(),
   owner: z.string({
     invalid_type_error: 'Please enter a wallet address.',
   }),
@@ -42,8 +42,9 @@ export type CreateState = {
 
 export async function createContract(prevState: CreateState, formData: FormData) {
   // 1. validate formData
-  console.log(formData);
+  // console.log(formData);
   const validatedFields = CreateContract.safeParse({
+    address: formData.get('address'),
     owner: formData.get('owner'),
     type: formData.get('type'),
     currentAmount: formData.get('currentAmount'),
@@ -56,7 +57,7 @@ export async function createContract(prevState: CreateState, formData: FormData)
       message: 'Missing Fields. Failed to Create Contract.',
     };
   }
-  const { owner, type, currentAmount } = validatedFields.data;
+  const { address, owner, type, currentAmount } = validatedFields.data;
   const newContract: NewContract = {
     owner: owner, 
     type: type, 
@@ -67,6 +68,7 @@ export async function createContract(prevState: CreateState, formData: FormData)
 
   // select time or money
   if (type === "time") {
+    // by time
     const CreateContractOption = CreateFormSchema.pick({ timestamp: true });
     const validatedTimestamp = CreateContractOption.safeParse({
       timestamp: formData.get('timestamp')
@@ -80,9 +82,9 @@ export async function createContract(prevState: CreateState, formData: FormData)
       };
     }
     const { timestamp } = validatedTimestamp.data;
-
-    newContract.timestamp = timestamp.toISOString();
+    newContract.timestamp = (timestamp.getTime() / 1000).toString();
   } else {
+    // by money
     const CreateContractOption = CreateFormSchema.pick({ targetAmount: true });
     const validatedTargetAmount = CreateContractOption.safeParse({
       targetAmount: formData.get('targetAmount')
@@ -99,10 +101,6 @@ export async function createContract(prevState: CreateState, formData: FormData)
     newContract.targetAmount = parseUnits(targetAmount.toString(), 'ether');
   }
 
-  // 2. publish contract by signer
-  console.log(newContract);
-  const address = Date.now().toString();
-
   // 3. update result to database
   try {
     await insertContractApi(address, newContract);
@@ -112,7 +110,6 @@ export async function createContract(prevState: CreateState, formData: FormData)
       message: 'Database Error: Failed to Create Contract.',
     };
   }
- 
   revalidatePath('/dashboard/contracts');
   redirect('/dashboard/contracts');
 }
@@ -125,9 +122,10 @@ const DepositFormSchema = z.object({
   depositAmount: z.coerce
     .number()
     .gt(0, { message: 'Please enter an amount greater than $0.' }),
+  totalAmount: z.coerce.number(),
 });
 
-const Deposit = DepositFormSchema.pick({ depositAmount: true });
+const Deposit = DepositFormSchema.pick({ totalAmount: true, depositAmount: true });
 
 export type DepositState = {
   errors?: {
@@ -137,12 +135,13 @@ export type DepositState = {
 };
 
 export async function deposit(
-  address: string, 
   prevState: DepositState,
-  formData: FormData
+  formData: FormData,
+  address: string
 ) {
   const validatedFields = Deposit.safeParse({
     depositAmount: formData.get('depositAmount'),
+    totalAmount: formData.get('totalAmount'),
   });
 
   if (!validatedFields.success) {
@@ -152,21 +151,63 @@ export async function deposit(
     };
   }
  
-  const { depositAmount } = validatedFields.data;
+  const totalAmount = parseUnits(validatedFields.data.totalAmount.toString(), 'wei');
 
   try {
-    await depositApi(address, parseUnits(depositAmount.toString(), 'ether'));
+    await depositApi(address, totalAmount);
   } catch (error) {
     console.log(error);
     return {
-      message: 'Database Error: Failed to Create Contract.',
+      message: 'Database Error: Failed to Deposit.',
     };
   };
 
   revalidatePath('/dashboard/contracts');
   redirect('/dashboard/contracts');
-}
-
-export async function deleteContract(address: string) {
-  revalidatePath('/dashboard/contracts');
 };
+
+
+
+const WithdrawFormSchema = z.object({
+  address: z.string(),
+  owner: z.string(),
+  currentAmount: z.coerce.number(),
+});
+
+const Withdraw = WithdrawFormSchema;
+
+export type WithdrawState = {
+  message?: string | null;
+};
+
+export async function withdraw(
+  prevState: DepositState,
+  formData: FormData
+) {
+  const validatedFields = Withdraw.safeParse({
+    address: formData.get('address'),
+    owner: formData.get('owner'),
+    currentAmount: formData.get('currentAmount'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      message: 'Missing Fields. Failed to Withdraw.',
+    };
+  }
+ 
+  const { address, owner, currentAmount } = validatedFields.data;
+
+  try {
+    await deleteContractApi(address);
+  } catch (error) {
+    console.log(error);
+    return {
+      message: 'Database Error: Failed to Delete Contract.',
+    };
+  };
+
+  revalidatePath('/dashboard/contracts');
+  redirect('/dashboard/contracts');
+};
+

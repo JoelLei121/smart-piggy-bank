@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import { Contract, NewContract } from "@/app/lib/definitions";
+import { ContractData, NewContract } from "@/app/lib/definitions";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -31,7 +31,6 @@ class DatabaseService {
         type TEXT NOT NULL CHECK(type IN ('money', 'time')),
         targetAmount INTEGER,
         timestamp TEXT,
-        status TEXT DEFAULT 'off-chain' NOT NULL CHECK(status IN ('off-chain', 'on-chain', 'expired')),
         
         -- Indexes for frequently queried columns
         CHECK(targetAmount >= currentAmount)
@@ -39,13 +38,12 @@ class DatabaseService {
   
       -- Create indexes for better query performance
       CREATE INDEX IF NOT EXISTS idx_contracts_owner ON contracts(owner);
-      CREATE INDEX IF NOT EXISTS idx_contracts_status ON contracts(status);
     `);
   }
 
-  getAllContracts(): Contract[] {
+  getAllContracts(): ContractData[] {
     const stmt = this.db.prepare('SELECT * FROM contracts');
-    return stmt.all() as Contract[];
+    return stmt.all() as ContractData[];
   }
 
   async getFilteredContracts(
@@ -59,9 +57,10 @@ class DatabaseService {
     const stmt = this.db.prepare(`
       SELECT
         contracts.address,
-        contracts.timestamp,
         contracts.currentAmount,
-        contracts.status
+        contracts.type,
+        contracts.timestamp,
+        contracts.targetAmount
       FROM contracts
       WHERE
         contracts.owner = ? AND 
@@ -69,29 +68,28 @@ class DatabaseService {
           contracts.address LIKE ? OR
           CAST(contracts.targetAmount AS TEXT) LIKE ? OR
           CAST(contracts.currentAmount AS TEXT) LIKE ? OR
-          contracts.type LIKE ? OR
-          contracts.status LIKE ?
+          contracts.type LIKE ?
         )
       ORDER BY contracts.address DESC
       LIMIT ? OFFSET ?
     `);
     const params = [
-      owner, likeTerm, likeTerm, likeTerm, 
+      owner, likeTerm, likeTerm, 
       likeTerm, likeTerm,
       ITEMS_PER_PAGE, offset
     ]
     const result = stmt.all(params);
-    return result as Contract[];
+    return result as ContractData[];
   }
 
   getContractsByOwner (owner: string) {
     const stmt = this.db.prepare('SELECT * FROM contracts WHERE owner = ?');
-    return stmt.all(owner) as Contract[];
+    return stmt.all(owner) as ContractData[];
   }
 
   getContractByAddress (address: string) {
     const stmt = this.db.prepare('SELECT * FROM contracts WHERE address = ?');
-    return stmt.get(address) as Contract | undefined;
+    return stmt.get(address) as ContractData | undefined;
   }
 
   async getContractPages (
@@ -108,11 +106,10 @@ class DatabaseService {
           contracts.address LIKE ? OR
           CAST(contracts.targetAmount AS TEXT) LIKE ? OR
           CAST(contracts.currentAmount AS TEXT) LIKE ? OR
-          contracts.type LIKE ? OR
-          contracts.status LIKE ?
+          contracts.type LIKE ?
         )
     `);
-    const result = stmt.get(owner, likeTerm, likeTerm, likeTerm, likeTerm, likeTerm);
+    const result = stmt.get(owner, likeTerm, likeTerm, likeTerm, likeTerm);
     // console.log(result);
     const totalPages = Math.ceil(Number(result['COUNT(*)']) / ITEMS_PER_PAGE);
     return totalPages;
@@ -161,11 +158,22 @@ class DatabaseService {
 
   async deposit (
     address: string,
-    depositAmount: bigint 
+    totalAmount: bigint
   ) {
-    // validation by ether.js
-    console.log("deposit to a contract!");
+    try {
+      const stmt = this.db.prepare(`
+        UPDATE contracts 
+        SET currentAmount = ?
+        WHERE address = ?
+      `);
+      const info = stmt.run(totalAmount, address);
+      return info.changes > 0;
+    } catch(error) {
+      console.log(error);
+      throw error;
+    }
   }
+
 }
 
 export default DatabaseService;

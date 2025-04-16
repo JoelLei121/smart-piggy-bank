@@ -10,7 +10,8 @@ export default function WalletConnectButton() {
     walletAddress, setWalletAddress, 
     isConnecting, setIsConnecting,
     error,
-    setProvider
+    setProvider,
+    setSigner
   } = useWallet();
 
   const handleConnect = async () => {
@@ -25,7 +26,9 @@ export default function WalletConnectButton() {
         method: 'eth_requestAccounts' 
       });
       setWalletAddress(accounts[0]);
-      setProvider(new ethers.BrowserProvider(window.ethereum));
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      setProvider(provider);
+      setSigner(await provider.getSigner())
       alert('Wallet is connected!');
       redirect('/dashboard/contracts');
     } catch (err) {
