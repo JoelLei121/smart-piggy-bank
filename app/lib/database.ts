@@ -6,7 +6,7 @@ import { ContractData, NewContract } from "@/app/lib/definitions";
 const ITEMS_PER_PAGE = 6;
 
 class DatabaseService {
-  private db: Database.Database;
+  private db!: Database.Database;
 
   constructor() {
     const dbPath = path.join(process.cwd(), 'data.db');
@@ -106,7 +106,7 @@ class DatabaseService {
           contracts.type LIKE ?
         )
     `);
-    const result = stmt.get(owner, likeTerm, likeTerm, likeTerm, likeTerm);
+    const result = stmt.get(owner, likeTerm, likeTerm, likeTerm, likeTerm) as { 'COUNT(*)': number };
     // console.log(result);
     const totalPages = Math.ceil(Number(result['COUNT(*)']) / ITEMS_PER_PAGE);
     return totalPages;
