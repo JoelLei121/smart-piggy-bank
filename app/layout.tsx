@@ -1,6 +1,6 @@
 import "@/app/ui/global.css";
 import { inter } from "@/app/ui/fonts";
-import { WalletProvider } from "./lib/context";
+import { LoadingProvider, WalletProvider } from "./lib/context";
 
 export default function RootLayout({
   children,
@@ -11,7 +11,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
         <WalletProvider>
+        <LoadingProvider>
           {children}
+        </LoadingProvider>
         </WalletProvider>
       </body>
     </html>

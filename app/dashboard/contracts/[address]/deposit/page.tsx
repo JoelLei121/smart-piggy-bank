@@ -1,8 +1,6 @@
 import Form from '@/app/ui/contracts/deposit-form';
 import Breadcrumbs from '@/app/ui/contracts/breadcrumbs';
-import { notFound } from 'next/navigation'; 
-import { ContractForm } from '@/app/lib/definitions';
-import { FixedNumber } from 'ethers';
+import { notFound } from 'next/navigation';
 import { getContractByAddressApi } from '@/app/lib/data';
 
 export default async function Page(props: {
@@ -14,11 +12,6 @@ export default async function Page(props: {
   
   if (!contract) {
     notFound();
-  }
-  
-  const contractForm: ContractForm = {
-    ...contract,
-    depositAmount: FixedNumber.fromValue(0).value
   }
   
   return (
@@ -33,7 +26,7 @@ export default async function Page(props: {
           },
         ]}
       />
-      <Form contract={contractForm}/>
+      <Form contract={contract}/>
     </main>
   );
 }

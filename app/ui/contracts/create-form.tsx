@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import {
   CheckIcon,
@@ -10,14 +10,15 @@ import {
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
 import { createContract, CreateState } from '@/app/lib/actions';
-import { useWallet } from '@/app/lib/context';
+import { useWallet, useLoading } from '@/app/lib/context';
 import CheckBalanceButton from './check-balance-button';
-import { deployTimeContract } from '@/app/lib/ether';
+import { deployMoneyContract, deployTimeContract } from '@/app/lib/ether';
 import { NewContract } from '@/app/lib/definitions';
 import { parseUnits } from 'ethers';
 
 export default function Form() {
   const { walletAddress, signer } = useWallet();
+  const { setIsLoading } = useLoading();
   const initialState: CreateState = { message: null, errors: {} };
   const [state, formAction] = useActionState(createContract, initialState);
   const [contractType, setType] = useState('time');
@@ -29,25 +30,28 @@ export default function Form() {
       owner: formData.get('owner')?.toString(),
       type: formData.get('type')?.toString(),
       currentAmount: parseUnits(formData.get('currentAmount').toString(), 'ether'),
-      timestamp: formData.get('timestamp'),
-      targetAmount: parseUnits(formData.get('currentAmount').toString(), 'ether')
+      unlockTimestamp: formData.get('unlockTimestamp'),
+      targetAmount: undefined
     };
     const newContract: NewContract = parseData;
-    const msec = new Date(newContract.timestamp).getTime()
-    newContract.timestamp = (msec / 1000).toString();
-    console.log(newContract);
     let address: string = "";
     try {
+      setIsLoading(true);
       if(parseData.type === 'time') {
+        const msec = new Date(newContract.unlockTimestamp).getTime()
+        newContract.unlockTimestamp = (msec / 1000).toString();
         address = await deployTimeContract(signer, newContract);
       } else {
-
+        newContract.targetAmount = parseUnits(formData.get('targetAmount').toString(), 'ether');
+        address = await deployMoneyContract(signer, newContract);
       }
       formData.append('address', address);
       formAction(formData);
-      console.log('after formAction')
+      alert('deploy success!');
     } catch(error) {
       return;
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -138,14 +142,14 @@ export default function Form() {
         {
           contractType==='time' &&
           <div className="mb-4">
-            <label htmlFor="timestamp" className="mb-2 block text-sm font-medium">
+            <label htmlFor="unlockTimestamp" className="mb-2 block text-sm font-medium">
               Choose a Target Date
             </label>
             <div className="relative mt-2 rounded-md">
               <div className="relative">
                 <input
-                  id="timestamp"
-                  name="timestamp"
+                  id="unlockTimestamp"
+                  name="unlockTimestamp"
                   type="datetime-local"
                   required
                   className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
@@ -155,8 +159,8 @@ export default function Form() {
             </div>
             <div>
               {
-                state.errors?.timestamp &&
-                state.errors.timestamp.map((error: string) => (
+                state.errors?.unlockTimestamp &&
+                state.errors.unlockTimestamp.map((error: string) => (
                   <p className="mt-2 text-sm text-red-500" key={error}>
                     {error}
                   </p>

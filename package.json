@@ -20,6 +20,7 @@
     "postcss": "8.5.1",
     "react": "latest",
     "react-dom": "latest",
+    "svg-loaders-react": "^3.1.1",
     "tailwindcss": "3.4.17",
     "typescript": "5.7.3",
     "use-debounce": "^10.0.4",

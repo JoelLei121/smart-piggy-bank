@@ -30,10 +30,7 @@ class DatabaseService {
         currentAmount INTEGER NOT NULL DEFAULT 0 CHECK(currentAmount >= 0),
         type TEXT NOT NULL CHECK(type IN ('money', 'time')),
         targetAmount INTEGER,
-        timestamp TEXT,
-        
-        -- Indexes for frequently queried columns
-        CHECK(targetAmount >= currentAmount)
+        unlockTimestamp TEXT
       );
   
       -- Create indexes for better query performance
@@ -59,7 +56,7 @@ class DatabaseService {
         contracts.address,
         contracts.currentAmount,
         contracts.type,
-        contracts.timestamp,
+        contracts.unlockTimestamp,
         contracts.targetAmount
       FROM contracts
       WHERE
@@ -120,17 +117,17 @@ class DatabaseService {
     contract: NewContract
   ): Promise<boolean> {
     try {
-      const { owner, currentAmount, type, targetAmount, timestamp } = contract;
+      const { owner, currentAmount, type, targetAmount, unlockTimestamp } = contract;
 
       const stmt = this.db.prepare(`
         INSERT INTO contracts (
           address, owner, currentAmount, 
-          type, targetAmount, timestamp
+          type, targetAmount, unlockTimestamp
         ) VALUES (?, ?, ?, ?, ?, ?)
       `);
       const info = stmt.run(
         address, owner, currentAmount, 
-        type, targetAmount, timestamp
+        type, targetAmount, unlockTimestamp
       );
       return info.changes > 0;
     } catch(error) {
@@ -159,14 +156,19 @@ class DatabaseService {
   async deposit (
     address: string,
     totalAmount: bigint
-  ) {
+  ): Promise<boolean> {
     try {
+      const checkStmt = this.db.prepare(`SELECT 1, currentAmount FROM contracts WHERE address = ?`);
+      const exists = checkStmt.get(address);
+      // console.log(exists);
+
       const stmt = this.db.prepare(`
         UPDATE contracts 
         SET currentAmount = ?
         WHERE address = ?
       `);
       const info = stmt.run(totalAmount, address);
+      // console.log(info)
       return info.changes > 0;
     } catch(error) {
       console.log(error);

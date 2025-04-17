@@ -41,12 +41,10 @@ export default function ContractTable({
 
             <tbody className="bg-white">
               {contracts?.map((contract: ContractData) => {
-                const time = formatTimestampToDate((contract.timestamp));
                 const currentAmountInEther = formatWeiToEther(contract.currentAmount);
-                console.log(currentAmountInEther);
                 let status: 'on-chain' | 'achieved' = 'on-chain';
                 if(contract.type === 'time') {
-                  if(parseInt(contract.timestamp)*1000 < renderTime) {
+                  if(parseInt(contract.unlockTimestamp)*1000 < renderTime) {
                     status = 'achieved';
                   }
                 } else {
@@ -68,7 +66,7 @@ export default function ContractTable({
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {
-                      contract.timestamp ? time : "None"
+                      contract.unlockTimestamp ? formatTimestampToDate((contract.unlockTimestamp)) : "None"
                     }
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">

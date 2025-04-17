@@ -16,7 +16,7 @@ const CreateFormSchema = z.object({
   type: z.enum(['money', 'time'], {
     invalid_type_error: 'Please select a contract type.',
   }),
-  timestamp: z.string()
+  unlockTimestamp: z.string()
     .min(1, "Date is required")
     .transform((val) => new Date(val)),
   targetAmount: z.coerce
@@ -27,13 +27,13 @@ const CreateFormSchema = z.object({
     .gte(0, { message: 'Please enter an amount greater than or equal to $0.' }),
 });
 
-const CreateContract = CreateFormSchema.omit({ targetAmount: true, timestamp: true });
+const CreateContract = CreateFormSchema.omit({ targetAmount: true, unlockTimestamp: true });
 
 export type CreateState = {
   errors?: {
     owner?: string[];
     type?: string[];
-    timestamp?: string[];
+    unlockTimestamp?: string[];
     targetAmount?: string[];
     currentAmount?: string[];
   };
@@ -62,16 +62,16 @@ export async function createContract(prevState: CreateState, formData: FormData)
     owner: owner, 
     type: type, 
     currentAmount: parseUnits(currentAmount.toString(), 'ether'),
-    timestamp: undefined,
+    unlockTimestamp: undefined,
     targetAmount: undefined, 
   }
 
   // select time or money
   if (type === "time") {
     // by time
-    const CreateContractOption = CreateFormSchema.pick({ timestamp: true });
+    const CreateContractOption = CreateFormSchema.pick({ unlockTimestamp: true });
     const validatedTimestamp = CreateContractOption.safeParse({
-      timestamp: formData.get('timestamp')
+      unlockTimestamp: formData.get('unlockTimestamp')
     });
     if (!validatedTimestamp.success) {
       console.log(validatedTimestamp);
@@ -81,8 +81,8 @@ export async function createContract(prevState: CreateState, formData: FormData)
         message: 'Missing Fields. Failed to Create Contract.',
       };
     }
-    const { timestamp } = validatedTimestamp.data;
-    newContract.timestamp = (timestamp.getTime() / 1000).toString();
+    const { unlockTimestamp } = validatedTimestamp.data;
+    newContract.unlockTimestamp = (unlockTimestamp.getTime() / 1000).toString();
   } else {
     // by money
     const CreateContractOption = CreateFormSchema.pick({ targetAmount: true });
@@ -122,10 +122,9 @@ const DepositFormSchema = z.object({
   depositAmount: z.coerce
     .number()
     .gt(0, { message: 'Please enter an amount greater than $0.' }),
-  totalAmount: z.coerce.number(),
 });
 
-const Deposit = DepositFormSchema.pick({ totalAmount: true, depositAmount: true });
+const Deposit = DepositFormSchema.pick({ address: true, currentAmount: true, depositAmount: true });
 
 export type DepositState = {
   errors?: {
@@ -136,32 +135,37 @@ export type DepositState = {
 
 export async function deposit(
   prevState: DepositState,
-  formData: FormData,
-  address: string
+  formData: FormData
 ) {
   const validatedFields = Deposit.safeParse({
+    address: formData.get('address'),
+    currentAmount: formData.get('currentAmount'),
     depositAmount: formData.get('depositAmount'),
-    totalAmount: formData.get('totalAmount'),
   });
 
+
   if (!validatedFields.success) {
+    console.log(validatedFields);
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Missing Fields. Failed to Deposit.',
     };
   }
  
-  const totalAmount = parseUnits(validatedFields.data.totalAmount.toString(), 'wei');
-
+  const address = validatedFields.data.address;
+  const currentAmount = parseUnits(validatedFields.data.currentAmount.toString(), 'ether');
+  const depositAmount = parseUnits(validatedFields.data.depositAmount.toString(), 'ether');
+  const totalAmount = currentAmount + depositAmount;
   try {
-    await depositApi(address, totalAmount);
+    const result = await depositApi(address, totalAmount);
+    console.log(result);
   } catch (error) {
     console.log(error);
     return {
       message: 'Database Error: Failed to Deposit.',
     };
   };
-
+  console.log("redirect");
   revalidatePath('/dashboard/contracts');
   redirect('/dashboard/contracts');
 };

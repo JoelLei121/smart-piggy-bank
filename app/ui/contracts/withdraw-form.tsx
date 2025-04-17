@@ -13,14 +13,15 @@ import { withdraw, WithdrawState } from '@/app/lib/actions';
 import { useActionState, useState } from 'react';
 import CheckBalanceButton from './check-balance-button';
 import { formatWeiToEther } from '@/app/lib/utils';
-import { useWallet } from '@/app/lib/context';
-import { withdrawContract } from '@/app/lib/ether';
+import { useLoading, useWallet } from '@/app/lib/context';
+import { withdrawMoneyContract, withdrawTimeContract } from '@/app/lib/ether';
 
 export default function WithdrawForm({
   contract,
 }: {
   contract: ContractData;
 }) {
+  const { setIsLoading } = useLoading();
   const { signer } = useWallet();
   const initialState: WithdrawState = { message: null };
   const [state, formAction] = useActionState(withdraw, initialState);
@@ -30,13 +31,19 @@ export default function WithdrawForm({
     const formData = new FormData(event.target);
     const address = formData.get('address')?.toString();
     try {
-      await withdrawContract(signer, address);
+      setIsLoading(true);
+      if(contract.type === 'time') {
+        await withdrawTimeContract(signer, address);
+      } else {
+        await withdrawMoneyContract(signer, address);
+      }
       formAction(formData);
-      console.log('after formAction')
+      alert('Withdraw success!');
     } catch(error) {
       return;
+    } finally {
+      setIsLoading(false);
     }
-    formAction(formData);
   }
 
   return (

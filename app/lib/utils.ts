@@ -32,6 +32,16 @@ export const formatTimestampToDate = (
   return formatter.format(date);
 };
 
+export const formatTimestampToTime = (
+  timestamp: string
+) => {
+  const date = new Date(parseInt(timestamp) * 1000);
+  const offset = -date.getTimezoneOffset() * 60; // in seconds
+  const newDate = new Date((parseInt(timestamp) + offset) * 1000);
+  const formattedDate = newDate.toISOString().slice(0, 16);
+  return formattedDate;
+};
+
 export const generatePagination = (currentPage: number, totalPages: number) => {
   // If the total number of pages is 7 or less,
   // display all pages without any ellipsis.

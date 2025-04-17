@@ -28,37 +28,6 @@ export function WalletProvider({ children }: WalletProviderProps) {
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
 
-  // // Check if wallet is connected on component mount
-  // useEffect(() => {
-  //   const checkWalletConnection = async () => {
-  //     if (window.ethereum) {
-  //       try {
-  //         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-  //         if (accounts.length > 0) {
-  //           setWalletAddress(accounts[0]);
-  //         }
-  //       } catch (err) {
-  //         console.error("Error checking wallet connection:", err);
-  //       }
-  //     }
-  //   };
-
-  //   checkWalletConnection();
-  // }, []);
-
-  // useEffect(() => {
-  //   if (window.ethereum) {
-  //     const handleAccountsChanged = (accounts: string[]) => {
-  //       setWalletAddress(accounts[0] || null);
-  //     };
-      
-  //     window.ethereum.on('accountsChanged', handleAccountsChanged);
-  //     return () => {
-  //       window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-  //     };
-  //   }
-  // }, []);
-
   const value = {
     walletAddress, setWalletAddress,
     isConnecting, setIsConnecting,
@@ -72,7 +41,6 @@ export function WalletProvider({ children }: WalletProviderProps) {
       {children}
     </WalletContext.Provider>
   );
-
 }
 
 export function useWallet(): WalletContextType {
@@ -82,3 +50,32 @@ export function useWallet(): WalletContextType {
   }
   return context;
 }
+
+
+type LoadingContextType = {
+  isLoading: boolean;
+  setIsLoading: (isLoading: boolean) => void;
+};
+
+const LoadingContext = createContext<LoadingContextType|undefined>(undefined);
+
+export function LoadingProvider({ children }: { children: ReactNode }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const value = {
+    isLoading, setIsLoading,
+  };
+
+  return (
+    <LoadingContext.Provider value={value}>
+      {children}
+    </LoadingContext.Provider>
+  );
+};
+
+export function useLoading(): LoadingContextType {
+  const context = useContext(LoadingContext);
+  if (context === undefined) {
+    throw new Error('useLoading failed');
+  }
+  return context;
+};
