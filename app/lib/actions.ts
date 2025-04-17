@@ -21,7 +21,7 @@ const CreateFormSchema = z.object({
     .transform((val) => new Date(val)),
   targetAmount: z.coerce
     .number()
-    .gt(0, { message: 'Please enter an amount greater than $0.' }),
+    .gte(0, { message: 'Please enter an amount greater than $0.' }),
   currentAmount: z.coerce
     .number()
     .gte(0, { message: 'Please enter an amount greater than or equal to $0.' }),
