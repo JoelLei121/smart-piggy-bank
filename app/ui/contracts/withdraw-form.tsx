@@ -26,12 +26,16 @@ export default function WithdrawForm({
   const initialState: WithdrawState = { message: null };
   const [state, formAction] = useActionState(withdraw, initialState);
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.target);
+    const formData = new FormData(event.currentTarget);
     const address = formData.get('address')?.toString();
     try {
       setIsLoading(true);
+      if (!signer || !address) {
+        alert("Please enter a deposit amount.");
+        return;
+      }
       if(contract.type === 'time') {
         await withdrawTimeContract(signer, address);
       } else {

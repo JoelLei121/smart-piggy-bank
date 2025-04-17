@@ -16,7 +16,16 @@ export type ContractData = {
   type: 'money' | 'time';
   status: 'off-chain' | 'on-chain' | 'achieved';
 };
-
+export interface CreateState {
+  message?: string | null;
+  errors?: {
+    owner?: string[];
+    type?: string[];
+    unlockTimestamp?: string[];
+    targetAmount?: string[];
+    currentAmount?: string[];
+  };
+}
 // export type DepositForm = {
 //   address: string;
 //   owner: string;

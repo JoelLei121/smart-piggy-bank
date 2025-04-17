@@ -1,5 +1,5 @@
 'use client';
-
+import dynamic from 'next/dynamic';
 import { PowerIcon } from "@heroicons/react/24/outline";
 import { useWallet } from "../lib/context";
 import { redirect } from 'next/navigation';
@@ -13,7 +13,7 @@ export default function WalletConnectButton() {
     setProvider,
     setSigner
   } = useWallet();
-
+  
   const handleConnect = async () => {
     if (!window.ethereum) {
       alert('Please install MetaMask!');

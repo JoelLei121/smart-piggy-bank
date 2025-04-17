@@ -27,13 +27,22 @@ export default function DepositForm({
   const initialState: DepositState = { errors: {}, message: null };
   const [state, formAction] = useActionState(deposit, initialState);
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.target);
+    const formData = new FormData(event.currentTarget);
     const address = formData.get('address')?.toString();
-    const depositAmount = parseUnits(formData.get('depositAmount').toString(), 'ether');
+    const depositAmountRaw = formData.get('depositAmount');
+        if (!depositAmountRaw) {
+          alert("Please enter a deposit amount.");
+          return;
+        }
+    const depositAmount = parseUnits(depositAmountRaw.toString(), 'ether');
     try {
       setIsLoading(true);
+      if (!signer || !address) {
+        alert("Please enter a deposit amount.");
+        return;
+      }
       if(contract.type === 'time') {
         await depositTimeContract(signer, address, depositAmount);
       } else {

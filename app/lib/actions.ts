@@ -40,14 +40,14 @@ export type CreateState = {
   message?: string | null;
 };
 
-export async function createContract(prevState: CreateState, formData: FormData) {
+export async function createContract(prevState: CreateState, formData: FormData): Promise<CreateState>{
   // 1. validate formData
   // console.log(formData);
   const validatedFields = CreateContract.safeParse({
-    address: formData.get('address'),
-    owner: formData.get('owner'),
-    type: formData.get('type'),
-    currentAmount: formData.get('currentAmount'),
+    address: formData.get('address')|| '',
+    owner: formData.get('owner')|| '',
+    type: formData.get('type')|| '',
+    currentAmount: formData.get('currentAmount') ,
   });
   if (!validatedFields.success) {
     console.log(validatedFields);
