@@ -15,34 +15,51 @@ import CheckBalanceButton from './check-balance-button';
 import { deployMoneyContract, deployTimeContract } from '@/app/lib/ether';
 import { NewContract } from '@/app/lib/definitions';
 import { parseUnits } from 'ethers';
-
+import { useFormState } from 'react-dom';
 export default function Form() {
   const { walletAddress, signer } = useWallet();
   const { setIsLoading } = useLoading();
   const initialState: CreateState = { message: null, errors: {} };
-  const [state, formAction] = useActionState(createContract, initialState);
+  const [state, formAction] = useFormState(createContract, initialState);
+  // const [state, formAction] = useActionState<CreateState>(createContract, initialState);
   const [contractType, setType] = useState('time');
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.target);
+    const formData = new FormData(event.currentTarget);
+    const currentAmountInput = formData.get('currentAmount');
+      if (!currentAmountInput) {
+        throw new Error('Current amount is required');
+      }
     const parseData = {
       owner: formData.get('owner')?.toString(),
       type: formData.get('type')?.toString(),
-      currentAmount: parseUnits(formData.get('currentAmount').toString(), 'ether'),
+      
+      currentAmount : parseUnits(currentAmountInput.toString(), 'ether'),
+      // currentAmount: parseUnits(formData.get('currentAmount').toString(), 'ether'),
       unlockTimestamp: formData.get('unlockTimestamp'),
       targetAmount: undefined
     };
-    const newContract: NewContract = parseData;
+    const newContract: NewContract = parseData as NewContract;
     let address: string = "";
     try {
       setIsLoading(true);
+      if (!signer) {
+        alert("Wallet not connected.");
+        return;
+      }
       if(parseData.type === 'time') {
-        const msec = new Date(newContract.unlockTimestamp).getTime()
+        const msec = new Date(newContract.unlockTimestamp as string).getTime()
         newContract.unlockTimestamp = (msec / 1000).toString();
         address = await deployTimeContract(signer, newContract);
       } else {
-        newContract.targetAmount = parseUnits(formData.get('targetAmount').toString(), 'ether');
+        const targetAmountRaw = formData.get('targetAmount');
+        if (!targetAmountRaw) {
+          alert("Please enter a target amount.");
+          return;
+        }
+        newContract.targetAmount = parseUnits(targetAmountRaw.toString(), 'ether');
+        // newContract.targetAmount = parseUnits(formData.get('targetAmount').toString(), 'ether');
         address = await deployMoneyContract(signer, newContract);
       }
       formData.append('address', address);
@@ -56,7 +73,7 @@ export default function Form() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form action={formAction} onSubmit={handleSubmit}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* User Wallet */}
         <div className="mb-4">
@@ -88,7 +105,11 @@ export default function Form() {
         </div>
 
         {/* Contract Type */}
-        <fieldset className="mb-4" onChange={(e) => { setType(e.target.value); }}>
+        <fieldset className="mb-4" onChange={(e) => {
+          const value = (e.target as HTMLInputElement).value;
+          setType(value);
+          // setType(e.target.value);
+           }}>
           <legend className="mb-2 block text-sm font-medium">
             Select Contract Type
           </legend>
