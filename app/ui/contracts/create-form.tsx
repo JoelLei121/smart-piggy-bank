@@ -73,7 +73,7 @@ export default function Form() {
   }
 
   return (
-    <form action={formAction} onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* User Wallet */}
         <div className="mb-4">
