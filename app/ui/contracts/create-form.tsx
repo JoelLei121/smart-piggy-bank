@@ -19,9 +19,9 @@ import { parseUnits } from 'ethers';
 export default function Form() {
   const { walletAddress, signer } = useWallet();
   const { setIsLoading } = useLoading();
-  const initialState: CreateState = { message: null, errors: {} };
+  const initialState: CreateState = { message: '', errors: {} };
   // const [state, formAction] = useFormState(createContract, initialState);
-  const [state, formAction] = useActionState<CreateState>(createContract, initialState);
+  const [state, formAction] = useActionState(createContract, initialState);
   const [contractType, setType] = useState('time');
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
