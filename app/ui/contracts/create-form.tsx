@@ -15,13 +15,13 @@ import CheckBalanceButton from './check-balance-button';
 import { deployMoneyContract, deployTimeContract } from '@/app/lib/ether';
 import { NewContract } from '@/app/lib/definitions';
 import { parseUnits } from 'ethers';
-import { useFormState } from 'react-dom';
+// import { useFormState } from 'react-dom';
 export default function Form() {
   const { walletAddress, signer } = useWallet();
   const { setIsLoading } = useLoading();
   const initialState: CreateState = { message: null, errors: {} };
-  const [state, formAction] = useFormState(createContract, initialState);
-  // const [state, formAction] = useActionState<CreateState>(createContract, initialState);
+  // const [state, formAction] = useFormState(createContract, initialState);
+  const [state, formAction] = useActionState<CreateState>(createContract, initialState);
   const [contractType, setType] = useState('time');
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
